@@ -5,6 +5,8 @@ import { SWATCHES } from "@/lib/constants";
 import { ColorSwatch, Group } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import Draggable from 'react-draggable';
+
 
 
 interface GeneratedResult {
@@ -34,22 +36,35 @@ export default function Home() {
 
 
 
-  //   useEffect(() => {
-  //     if (latexExpression.length > 0 && window.MathJax) {
-  //         setTimeout(() => {
-  //             window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub]);
-  //         }, 0);
-  //     }
-  // }, [latexExpression]);
 
-  // useEffect(() => {
-  //     if (result) {
-  //         renderLatexToCanvas(result.expression, result.answer);
-  //     }
-  // }, [result]);
+  useEffect(() => {
+    if (latexExpression.length > 0 && window.MathJax) {
+      setTimeout(() => {
+        window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub]);
+      }, 0);
+    }
+  }, [latexExpression]);
+
+  useEffect(() => {
+    if (result) {
+      renderLatexToCanvas(result.expression, result.answer);
+    }
+  }, [result]);
 
 
+  const renderLatexToCanvas = (expression: string, answer: string) => {
+    const latex = `\\(\\LARGE{${expression} = ${answer}}\\)`;
+    setLatexExpression([...latexExpression, latex]);
 
+    // Clear the main canvas
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  };
 
   // For reset the canvas
   useEffect(() => {
@@ -81,6 +96,16 @@ export default function Home() {
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML';
     script.async = true;
     document.head.appendChild(script);
+
+    script.onload = () => {
+      window.MathJax.Hub.Config({
+        tex2jax: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      });
+    };
+
+    return () => {
+      document.head.removeChild(script);
+    };
 
   }, [])
 
@@ -195,25 +220,27 @@ export default function Home() {
 
   return (
     <main>
-      <section className='grid grid-cols-3 gap-2'>
+      <section className='flex  gap-2'>
         <Button
           onClick={() => setReset(true)}
-          className='z-20 bg-black text-white'
+          className='z-20 bg-gray-900 text-white w-2/12 '
           variant='default'
           color='black'
         >Reset </Button>
 
 
-        <Group className='z-20'>
-          {SWATCHES.map((swatch) => (
-            <ColorSwatch key={swatch} color={swatch} onClick={() => setColor(swatch)} />
-          ))}
+        <Group className='z-20 w-8/12 '>
+          <div className="flex justify-center w-full gap-6">
+            {SWATCHES.map((swatch) => (
+              <ColorSwatch key={swatch} color={swatch} onClick={() => setColor(swatch)} />
+            ))}
+          </div>
         </Group>
 
 
         <Button
           onClick={runRoute}
-          className='z-20 bg-black text-white'
+          className='z-20 bg-gray-900 text-white w-2/12'
           variant='default'
           color='white'
         >  Run </Button>
@@ -232,7 +259,7 @@ export default function Home() {
         onMouseUp={StopDrawing}
       />
 
-      {/* {latexExpression && latexExpression.map((latex, index) => (
+      {latexExpression && latexExpression.map((latex, index) => (
         <Draggable
           key={index}
           defaultPosition={latexPosition}
@@ -242,7 +269,7 @@ export default function Home() {
             <div className="latex-content">{latex}</div>
           </div>
         </Draggable>
-      ))} */}
+      ))}
 
     </main>
   );
